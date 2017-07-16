@@ -9,7 +9,7 @@ challenge. The exceptions are a result of laziness and an arbitrary timebox
 rather than fundamental to the architecture. Commentary on these points are in
 the code.
 
-### Open Questions
+## Open Questions
 
 * What's the best way to handle navigation states? I'm using an enum but feels
   a little weird. Not sure about the `if` clauses in sub-components.
@@ -25,3 +25,7 @@ the code.
 ## Development
 
 [Standard React](https://github.com/facebookincubator/create-react-app/blob/master/packages/react-scripts/template/README.md#available-scripts) (`npm start` etc).
+
+## Deploy
+
+It's [deployed on Heroku](https://whispering-tor-58323.herokuapp.com/) using the [`create-react-app` buildpack](https://blog.heroku.com/deploying-react-with-zero-configuration).

@@ -25,14 +25,22 @@ var INITIAL_DATA = {
 
 // The following time handling functions are left as an exercise to the reader.
 function formatDuration(x) {
-  return x;
+  if (x === null || x === 0)
+    return "";
+  return x + "";
 }
 
 function formatDelta(x, y) {
   if (!x || !y) {
     return ""
   }
-  return x - y;
+  var diff = x - y;
+
+  if (diff < 0) {
+    return diff;
+  } else {
+    return "+" + diff;
+  }
 }
 
 function parseInputToMs(input) {
@@ -47,6 +55,10 @@ function parseInputToMs(input) {
 
 
 
+function sumBests(splits) {
+  // Don't need to filter out nulls coz thanks javascript
+  return splits.map(x => x.bestTimeMs).reduce((x, y) => x + y);
+}
 
 class SplitTracker extends React.Component {
   constructor(props) {
@@ -68,6 +80,10 @@ class SplitTracker extends React.Component {
   handleSplit(n, totalTimeInMs) {
     var splitTime = totalTimeInMs - this.state.mostRecentTimeMs;
 
+    if (splitTime < 0) {
+      return false
+    }
+
     // Deep copy I guess? Appear to be libraries for handling this for
     // efficiently but not interested in investigating right now.
     var splits = Object.assign({}, this.state).splits;
@@ -78,6 +94,8 @@ class SplitTracker extends React.Component {
       splits:           splits,
       mostRecentTimeMs: totalTimeInMs
     });
+
+    return true;
   }
 
   handleSplitSelect(n) {
@@ -85,7 +103,8 @@ class SplitTracker extends React.Component {
       return false;
 
     // One can imagine something here for the "first 6 random" logic.
-    if (n > 0 && n <= this.state.splits.length) {
+    var split = this.state.splits[n-1];
+    if (split && !split.recentTimeMs) {
       this.setState({navState: TIME_ENTER});
       return true;
     } else {
@@ -117,6 +136,7 @@ class SplitTracker extends React.Component {
     var splits = this.state.splits.map((data, n) =>
       <Split {...data} navState={navState} key={n} />
     );
+    // Could probably extract the table to a component
     return (
       <div className='row'>
         <div className='col-md-3'>
@@ -124,7 +144,10 @@ class SplitTracker extends React.Component {
             <thead>
               <tr>
                 <th>Total:</th>
-                <th>{formatDuration(this.state.mostRecentTimeMs)}</th>
+                {navState === PREGAME &&
+                  <th>{formatDuration(sumBests(this.state.splits))}</th>}
+                {navState !== PREGAME &&
+                  <th>{formatDuration(this.state.mostRecentTimeMs)}</th>}
                 <th></th>
               </tr>
             </thead>
@@ -201,10 +224,17 @@ class SplitInput extends React.Component {
         this.setState({n: null, value: ''});
       }
     } else {
-      this.props.onSplit(this.state.n, this.state.value);
-      this.setState({n: null, value: ''});
+      if (this.props.onSplit(this.state.n, this.state.value)) {
+        this.setState({n: null, value: ''});
+      } else {
+        this.setState({value: ''});
+      }
     }
     event.preventDefault();
+  }
+
+  componentDidMount() {
+    this.textInput.focus();
   }
 
   render() {
@@ -218,7 +248,12 @@ class SplitInput extends React.Component {
     return (
       <form onSubmit={this.handleSubmit}>
         <label>{label}
-        <input type="text" value={this.state.value} onChange={this.handleChange} />
+        <input
+          placeholder="Integers only!"
+          type="text"
+          value={this.state.value}
+          ref={(input) => { this.textInput = input; }}
+          onChange={this.handleChange} />
         </label>
       </form>
     );
@@ -235,7 +270,7 @@ class App extends Component {
         <div className='page-header' style={{paddingBottom: 0}}>
           <img alt='Kirby' src='kirby.png' width='30' style={{float: 'left', display:'inline', marginRight: 10}}/>
           <h1 style={{marginBottom: 5}}>KSSU Boss Rush Split Timer</h1>
-          <p>Noodling around with some React ideas for the <a href="https://gist.github.com/lexi-lambda/701f1f1282401059f13a4220e8178ba4">KSSU Splits Timer GUI Challenge</a>. (This is my first React app.)</p>
+          <p>Noodling around with some React ideas for the <a href="https://gist.github.com/lexi-lambda/701f1f1282401059f13a4220e8178ba4">KSSU Splits Timer GUI Challenge</a>. This is my first React app. <a href="https://github.com/xaviershay/kssu-timer">Source and caveats.</a></p>
         </div>
         <SplitTracker />
       </div>
